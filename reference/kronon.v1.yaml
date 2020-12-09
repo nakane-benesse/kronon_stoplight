@@ -1,0 +1,382 @@
+openapi: 3.0.0
+info:
+  title: kronon
+  version: '1.0'
+servers:
+  - url: 'http://localhost:3000'
+paths:
+  /auth/tooken:
+    post:
+      summary: ''
+      operationId: post-auth-tooken
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+        '400':
+          description: Bad Request
+      description: アクセストークンの発行、再発行をするためのAPI
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - properties:
+                    email:
+                      type: string
+                    password:
+                      type: string
+                  required:
+                    - email
+                    - password
+              type: object
+      security: []
+    delete:
+      summary: ''
+      operationId: delete-auth-tooken
+      responses:
+        '200':
+          description: OK
+  /schedule/schedule:
+    get:
+      summary: get-user-schedule-schedule
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '400':
+          description: Bad Request
+      operationId: get-user-schedule-schedule
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                schedule_id:
+                  type: string
+          application/xml:
+            schema:
+              type: object
+              properties:
+                schedule_id:
+                  type: number
+      description: スケジュール詳細画面で叩くAPI
+    parameters: []
+    post:
+      summary: ''
+      operationId: post-schedule-schedule
+      responses:
+        '201':
+          description: Created
+        '400':
+          description: Bad Request
+      description: 新規予定登録の画面で叩くAPI
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  description: タイトル
+                content:
+                  type: string
+                  description: 内容
+                date:
+                  type: string
+                  format: date
+                  description: |-
+                    日付
+                    yyyy-MM-dd形式
+                start_time:
+                  type: string
+                  description: |-
+                    開始時間
+                    hh:mm形式
+                  format: time
+                end_time:
+                  type: string
+                  description: |-
+                    終了時間
+                    hh:mm形式
+                  format: time
+                place:
+                  type: number
+                  description: '1:オフィス/2:在宅/3:外出'
+              required:
+                - title
+                - date
+                - start_time
+                - end_time
+                - place
+    put:
+      summary: ''
+      operationId: put-schedule-schedule
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Bad Request
+      description: 予定修正画面で叩くAPI
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                schedule_id:
+                  type: number
+                title:
+                  type: string
+                content:
+                  type: string
+                date:
+                  type: string
+                start_time:
+                  type: string
+                end_time:
+                  type: string
+                place:
+                  type: number
+              required:
+                - schedule_id
+                - title
+                - date
+                - start_time
+                - end_time
+                - place
+          application/xml:
+            schema:
+              type: object
+              properties:
+                '':
+                  type: string
+        description: ''
+    delete:
+      summary: ''
+      operationId: delete-schedule-schedule
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Bad Request
+      description: 予定削除ボタンで叩くAPI
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                schedule_id:
+                  type: number
+              required:
+                - schedule_id
+        description: ''
+  /user:
+    get:
+      summary: get-user
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user_name:
+                    type: string
+                    description: userの登録名
+                  user_mail:
+                    type: string
+                    description: userの登録メールアドレス
+                    format: email
+                required:
+                  - user_name
+                  - user_mail
+      operationId: get-user
+      description: |-
+        アカウント画面でユーザ情報を表示するために叩くAPI
+        名前とアドレスを返す
+    post:
+      summary: ''
+      operationId: post-user
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+        '400':
+          description: Bad Request
+      description: |-
+        アカウント登録の時に叩くAPI
+        名前、メールアドレス、パスワードを登録する
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: ユーザーの名前
+                mail:
+                  type: string
+                  format: email
+                  description: ユーザーのメールアドレス
+                password:
+                  type: string
+                  description: ユーザーのパスワード
+              required:
+                - name
+                - mail
+                - password
+      security: []
+  /schedule/month_schedule:
+    get:
+      summary: get-schedule-month_schedule
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Schedule'
+        '400':
+          description: Bad Request
+        '':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    schedule_id:
+                      type: number
+                    schedule_titile:
+                      type: string
+                    schdeule_content:
+                      type: string
+                  required:
+                    - schedule_id
+                    - schedule_titile
+      operationId: get-schedule-month_schedule
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                date:
+                  type: string
+                  format: date
+      description: |
+        カレンダーで叩くAPI
+    parameters: []
+  /schedule/others_schedule:
+    get:
+      summary: get-schedule-others_schedule
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                uniqueItems: false
+                items:
+                  type: object
+                  properties:
+                    user_name:
+                      type: string
+                    schedule:
+                      $ref: '#/components/schemas/Schedule'
+                  required:
+                    - user_name
+                    - schedule
+        '400':
+          description: Bad Request
+      operationId: get-schedule-others_schedule
+      description: |-
+        予定表示画面で叩くAPI
+        特定の日付の、最大5人分の予定を返す
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                date:
+                  type: string
+                  format: date
+              required:
+                - date
+components:
+  schemas:
+    Schedule:
+      title: Schedule
+      type: object
+      description: 予定のモデル
+      properties:
+        schedule_id:
+          type: number
+          description: 予定の識別子
+        schedule_title:
+          type: string
+          description: タイトル
+        schedule_content:
+          type: string
+          description: 内容
+        schedule_date:
+          type: string
+          description: |-
+            日付
+            yyyy-MM-dd形式
+        schedule_start_time:
+          type: string
+          description: |-
+            開始時間
+            hh:mm形式
+        schedule_end_time:
+          type: string
+          description: |-
+            終了時間
+            hh:mm形式
+        schedule_place:
+          type: string
+          description: |-
+            オフィス/在宅/外出
+            のいずれかを返す
+      required:
+        - schedule_id
+        - schedule_title
+        - schedule_date
+        - schedule_start_time
+        - schedule_end_time
+        - schedule_place
+  securitySchemes:
+    Access Token:
+      type: http
+      scheme: bearer
+security:
+  - Access Token: []
