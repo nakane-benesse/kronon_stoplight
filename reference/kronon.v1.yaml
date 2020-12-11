@@ -2,16 +2,20 @@ openapi: 3.0.0
 info:
   title: kronon
   version: '1.0'
+  contact:
+    name: nakane
+  description: スケジュール管理アプリ「くろのん」を使用するためのAPIたち
 servers:
   - url: 'http://localhost:3000'
 paths:
-  /auth/tooken:
+  /auth/token:
     post:
-      summary: ''
-      operationId: post-auth-tooken
+      summary: login
+      tags: []
+      operationId: login
       responses:
-        '201':
-          description: Created
+        '200':
+          description: OK
           content:
             application/json:
               schema:
@@ -19,9 +23,16 @@ paths:
                 properties:
                   token:
                     type: string
+                    description: トークン
+                  user:
+                    $ref: '#/components/schemas/User'
         '400':
           description: Bad Request
-      description: アクセストークンの発行、再発行をするためのAPI
+        '500':
+          description: Internal Server Error
+      description: |-
+        ログインの時に叩くAPI
+        アクセストークンを発行する
       requestBody:
         content:
           application/json:
@@ -30,23 +41,88 @@ paths:
                 - properties:
                     email:
                       type: string
+                      description: メールアドレス
+                      format: email
                     password:
                       type: string
+                      format: password
+                      description: パスワード
                   required:
                     - email
                     - password
               type: object
       security: []
     delete:
-      summary: ''
-      operationId: delete-auth-tooken
+      summary: logout
+      tags: []
+      operationId: logout
       responses:
         '200':
           description: OK
-  /schedule/schedule:
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/500InternalServerError'
+      description: |-
+        ログアウトの時に叩くAPI
+
+        アクセストークンを削除する
+    parameters: []
+  '/schedules/{id}':
     get:
-      summary: get-user-schedule-schedule
+      summary: get-schedule
       tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/401UnauthorizedError'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/404NotFoundError'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/500InternalServerError'
+      operationId: get-schedule
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+          application/xml:
+            schema:
+              type: object
+              properties:
+                schedule_id:
+                  type: number
+      description: スケジュール詳細画面で叩くAPI
+    parameters:
+      - schema:
+          type: integer
+        name: id
+        in: path
+        required: true
+        description: スケジュールID
+    put:
+      summary: update-schedule
+      tags: []
+      operationId: update-schedule
       responses:
         '200':
           description: OK
@@ -56,79 +132,28 @@ paths:
                 $ref: '#/components/schemas/Schedule'
         '400':
           description: Bad Request
-      operationId: get-user-schedule-schedule
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                schedule_id:
-                  type: string
-          application/xml:
-            schema:
-              type: object
-              properties:
-                schedule_id:
-                  type: number
-      description: スケジュール詳細画面で叩くAPI
-    parameters: []
-    post:
-      summary: ''
-      operationId: post-schedule-schedule
-      responses:
-        '201':
-          description: Created
-        '400':
-          description: Bad Request
-      description: 新規予定登録の画面で叩くAPI
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                title:
-                  type: string
-                  description: タイトル
-                content:
-                  type: string
-                  description: 内容
-                date:
-                  type: string
-                  format: date
-                  description: |-
-                    日付
-                    yyyy-MM-dd形式
-                start_time:
-                  type: string
-                  description: |-
-                    開始時間
-                    hh:mm形式
-                  format: time
-                end_time:
-                  type: string
-                  description: |-
-                    終了時間
-                    hh:mm形式
-                  format: time
-                place:
-                  type: number
-                  description: '1:オフィス/2:在宅/3:外出'
-              required:
-                - title
-                - date
-                - start_time
-                - end_time
-                - place
-    put:
-      summary: ''
-      operationId: put-schedule-schedule
-      responses:
-        '200':
-          description: OK
-        '400':
-          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/400BadRequestError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/401UnauthorizedError'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/404NotFoundError'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/500InternalServerError'
       description: 予定修正画面で叩くAPI
       requestBody:
         content:
@@ -136,8 +161,6 @@ paths:
             schema:
               type: object
               properties:
-                schedule_id:
-                  type: number
                 title:
                   type: string
                 content:
@@ -151,7 +174,6 @@ paths:
                 place:
                   type: number
               required:
-                - schedule_id
                 - title
                 - date
                 - start_time
@@ -165,26 +187,30 @@ paths:
                   type: string
         description: ''
     delete:
-      summary: ''
-      operationId: delete-schedule-schedule
+      summary: delete-schedule
+      tags: []
+      operationId: delete-schedule
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                type: object
         '400':
           description: Bad Request
+        '404':
+          description: Not Found
+        '500':
+          description: Internal Server Error
       description: 予定削除ボタンで叩くAPI
       requestBody:
         content:
           application/json:
             schema:
               type: object
-              properties:
-                schedule_id:
-                  type: number
-              required:
-                - schedule_id
         description: ''
-  /user:
+  '/users/{id}':
     get:
       summary: get-user
       tags: []
@@ -194,62 +220,40 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  user_name:
-                    type: string
-                    description: userの登録名
-                  user_mail:
-                    type: string
-                    description: userの登録メールアドレス
-                    format: email
-                required:
-                  - user_name
-                  - user_mail
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/401UnauthorizedError'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/404NotFoundError'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/500InternalServerError'
       operationId: get-user
       description: |-
         アカウント画面でユーザ情報を表示するために叩くAPI
         名前とアドレスを返す
-    post:
-      summary: ''
-      operationId: post-user
-      responses:
-        '201':
-          description: Created
-          content:
-            application/json:
-              schema:
-                type: object
-                properties: {}
-        '400':
-          description: Bad Request
-      description: |-
-        アカウント登録の時に叩くAPI
-        名前、メールアドレス、パスワードを登録する
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                  description: ユーザーの名前
-                mail:
-                  type: string
-                  format: email
-                  description: ユーザーのメールアドレス
-                password:
-                  type: string
-                  description: ユーザーのパスワード
-              required:
-                - name
-                - mail
-                - password
-      security: []
-  /schedule/month_schedule:
+    parameters:
+      - schema:
+          type: integer
+        name: id
+        in: path
+        required: true
+        description: |
+          ユーザーID
+  /schedules/month:
     get:
-      summary: get-schedule-month_schedule
+      summary: schedule-show
       tags: []
       responses:
         '200':
@@ -262,6 +266,22 @@ paths:
                   $ref: '#/components/schemas/Schedule'
         '400':
           description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/400BadRequestError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/401UnauthorizedError'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/500InternalServerError'
         '':
           content:
             application/json:
@@ -279,7 +299,7 @@ paths:
                   required:
                     - schedule_id
                     - schedule_titile
-      operationId: get-schedule-month_schedule
+      operationId: get-month-schedule
       requestBody:
         content:
           application/json:
@@ -289,12 +309,18 @@ paths:
                 date:
                   type: string
                   format: date
+                  description: |-
+                    表示したい月の日付
+                    yyyy-MM-dd 形式
+                    ddの値は使用しないので任意
+              required:
+                - date
       description: |
         カレンダーで叩くAPI
     parameters: []
-  /schedule/others_schedule:
+  /schedules/others:
     get:
-      summary: get-schedule-others_schedule
+      summary: schedule-show
       tags: []
       responses:
         '200':
@@ -316,7 +342,23 @@ paths:
                     - schedule
         '400':
           description: Bad Request
-      operationId: get-schedule-others_schedule
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/400BadRequestError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/401UnauthorizedError'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/500InternalServerError'
+      operationId: schedule-show
       description: |-
         予定表示画面で叩くAPI
         特定の日付の、最大5人分の予定を返す
@@ -329,51 +371,259 @@ paths:
                 date:
                   type: string
                   format: date
+                  description: |-
+                    表示したい日の日付
+                    yyyy-MM-dd形式
               required:
                 - date
+            examples:
+              date:
+                value:
+                  date: '2019-08-24'
+    parameters: []
+  /schedules:
+    post:
+      summary: create-schedule
+      tags: []
+      operationId: create-schedule
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/400BadRequestError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/401UnauthorizedError'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/500InternalServerError'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  description: タイトル
+                content:
+                  type: string
+                  description: 内容
+                date:
+                  type: string
+                  format: date
+                  description: 日付
+                start_time:
+                  type: string
+                  format: time
+                  description: |-
+                    開始時間
+                    hh:mm形式
+                end_time:
+                  type: string
+                  format: time
+                  description: |-
+                    終了時間
+                    hh:mm形式
+                place:
+                  type: integer
+                  minimum: 0
+                  maximum: 2
+                  description: |-
+                    場所
+                    0:オフィス/1:在宅/2:外出
+              required:
+                - title
+                - date
+                - start_time
+                - end_time
+                - place
+      description: 予定新規作成画面で叩くAPI
+  /users:
+    post:
+      summary: create-user
+      tags: []
+      operationId: create-user
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  schedule:
+                    $ref: '#/components/schemas/Schedule'
+                  token:
+                    type: string
+                    description: トークン
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/400BadRequestError'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/500InternalServerError'
+      description: |-
+        アカウント新規作成画面で叩くAPI
+        ログイン処理まで行い、トークンを返す
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+              required:
+                - name
+                - email
+                - password
+      security: []
 components:
   schemas:
     Schedule:
       title: Schedule
       type: object
       description: 予定のモデル
+      x-examples:
+        schedule:
+          id: 1
+          title: Android特訓
+          content: 画面を結合するぞ
+          date: '2020-12-10'
+          start_time: '11:00'
+          end_time: '13:00'
+          place: 0
       properties:
-        schedule_id:
-          type: number
+        id:
+          type: integer
           description: 予定の識別子
-        schedule_title:
+        title:
           type: string
           description: タイトル
-        schedule_content:
+        content:
           type: string
           description: 内容
-        schedule_date:
+        date:
           type: string
           description: |-
             日付
             yyyy-MM-dd形式
-        schedule_start_time:
+        start_time:
           type: string
           description: |-
             開始時間
             hh:mm形式
-        schedule_end_time:
+        end_time:
           type: string
           description: |-
             終了時間
             hh:mm形式
-        schedule_place:
-          type: string
+        place:
+          type: integer
           description: |-
-            オフィス/在宅/外出
+            0:オフィス/1:在宅/2:外出
             のいずれかを返す
+          minimum: 0
+          maximum: 2
+          exclusiveMinimum: true
+          exclusiveMaximum: true
       required:
-        - schedule_id
-        - schedule_title
-        - schedule_date
-        - schedule_start_time
-        - schedule_end_time
-        - schedule_place
+        - id
+        - title
+        - date
+        - start_time
+        - end_time
+        - place
+    404NotFoundError:
+      title: 404NotFoundError
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      x-examples:
+        id-not-founded:
+          code: id-not-founded
+          message: 指定されたIDは存在しませんでした
+    401UnauthorizedError:
+      title: 401Unauthorized
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      x-examples:
+        argument-error:
+          code: argument-error
+          message: 認証情報の指定がありません
+        access-token-expired:
+          code: access-token-expired
+          message: アクセストークンの有効期限が切れています
+    400BadRequestError:
+      title: 400BadRequestError
+      type: object
+      x-examples:
+        bad-request-error:
+          code: bad-request-error
+          message: 指定されたパラメータに誤りがあります
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+    500InternalServerError:
+      title: 500InternalServerError
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      x-examples:
+        internal-server-error:
+          code: internal-server-error
+          message: サーバー内部でエラーが発生しました
+    User:
+      title: User
+      type: object
+      properties:
+        name:
+          type: string
+          description: 表示名
+        email:
+          type: string
+          format: email
+          description: メールアドレス
+      required:
+        - name
+        - email
   securitySchemes:
     Access Token:
       type: http
